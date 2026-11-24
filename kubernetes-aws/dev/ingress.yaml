@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${PROJECT_NAME}
+  namespace: ${PROJECT_NAME}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx-internal-sandbox
+  rules:
+    - host: ${PROJECT_NAME}-stg.onaws.giuffre.it
+      http:
+        paths:
+          - backend:
+              service:
+                name: ${PROJECT_NAME}-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - ${PROJECT_NAME}-stg.onaws.giuffre.it

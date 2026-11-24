@@ -1,0 +1,61 @@
+{
+  "scopeId": "42ea853a-d4d8-45e5-8217-08198d81a48d",
+  "name": "smartworking 2",
+  "createdAt": "2026-11-05T14:46:44.742Z",
+  "updatedAt": "2026-11-05T14:46:44.742Z",
+  "sourceSessionId": "492ddc98-00ac-4256-a3e4-7bfa04da33d4",
+  "selectedDocuments": [
+    {
+      "id": "doc1",
+      "title": "CCNL impiego privato - 19 novembre 2025"
+    },
+    {
+      "id": "doc2",
+      "title": "CCNL impiego privato - 07 agosto 2025"
+    },
+    {
+      "id": "doc3",
+      "title": "CCNL impiego privato - 21 luglio 2025"
+    },
+    {
+      "id": "doc4",
+      "title": "Ordinanza del Presidente del Consiglio dei Ministri - 20 giugno 2025 - n. 30"
+    },
+    {
+      "id": "doc5",
+      "title": "Ordinanza del Presidente del Consiglio dei Ministri - 20 giugno 2025 - n. 30"
+    },
+    {
+      "id": "doc6",
+      "title": "CCNL impiego privato - 09 marzo 2022"
+    },
+    {
+      "id": "doc7",
+      "title": "CCNL impiego privato - 22 febbraio 2021"
+    },
+    {
+      "id": "doc8",
+      "title": "Decreto - 23 dicembre 2020 - n. 170594"
+    },
+    {
+      "id": "doc9",
+      "title": "Protocollo - 24 novembre 2020"
+    },
+    {
+      "id": "doc10",
+      "title": "Comunicato - 14 luglio 2020"
+    },
+    {
+      "id": "doc11",
+      "title": "Comunicato - 14 luglio 2020"
+    },
+    {
+      "id": "doc12",
+      "title": "Comunicato - 14 luglio 2020"
+    },
+    {
+      "id": "doc13",
+      "title": "CCNL impiego privato - 24 luglio 2019"
+    }
+  ]
+}

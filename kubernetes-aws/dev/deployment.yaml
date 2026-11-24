@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ${PROJECT_NAME}
+  name: ${PROJECT_NAME}
+  namespace: ${PROJECT_NAME}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${PROJECT_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${PROJECT_NAME}
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: gfl/isarch
+                  operator: In
+                  values:
+                    - amdx86
+      containers:
+      - image: registry-oc.giuffre.it/dpp/${PROJECT_NAME}:${TAG_NAME}
+        imagePullPolicy: Always
+        name: ${PROJECT_NAME}
+        ports:
+        - containerPort: ${DEV_PORT}
+          name: web
+          protocol: TCP
+        resources:
+        volumeMounts:
+          - name: env-volume
+            mountPath: /usr/src/app/env
+            subPath: env
+      volumes:
+      - name: env-volume
+        configMap:
+          name: env-config
+          items:
+            - key: environment
+              path: env
+      imagePullSecrets:
+      - name: registry-oc
+

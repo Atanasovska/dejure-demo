@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ${PROJECT_NAME}
+  name: ${PROJECT_NAME}-svc
+  namespace: ${PROJECT_NAME}
+spec:
+  ports:
+    - name: web
+      port: 80
+      protocol: TCP
+      targetPort: ${DEV_PORT}
+  selector:
+    app: ${PROJECT_NAME}
+

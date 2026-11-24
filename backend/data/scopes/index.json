@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "scopeId": "42ea853a-d4d8-45e5-8217-08198d81a48d",
+      "name": "smartworking 2",
+      "createdAt": "2026-11-05T14:46:44.742Z",
+      "updatedAt": "2026-11-05T14:46:44.742Z",
+      "documentsCount": 13
+    },
+    {
+      "scopeId": "bd48cf75-ecf1-4718-8c5e-07b0b31ea351",
+      "name": "smartworking",
+      "createdAt": "2026-11-05T14:43:58.119Z",
+      "updatedAt": "2026-11-05T14:43:58.119Z",
+      "documentsCount": 13
+    }
+  ]
+}

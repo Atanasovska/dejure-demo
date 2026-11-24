@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DeJure – Prototipo Chat AI su Documenti Selezionati</title>
+    <style>
+:root {
+  --bg: #f6f7fb;
+  --paper: #ffffff;
+  --ink: #1f2a37;
+  --muted: #5b6b7f;
+  --line: #e3e8ef;
+  --blue-600: #2f6f99; /* fascia blu */
+  --blue-700: #245d80;
+  --violet: #2a1db6; /* topbar */
+  --orange: #ef7b45; /* selezione */
+  --green: #86c776;
+  --primary: #1b6aa6;
+  --danger: #d9534f;
+  --bar-h: 52px; /* altezza utility bar */
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Topbar viola */
+.topbar { background: var(--violet); color: #fff; }
+.topbar-content { max-width: 1200px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px; align-items: center; }
+.top-right { margin-left: auto; opacity: 0.9; }
+.top-link { opacity: 0.95; font-weight: 600; font-size: 14px; }
+.sep { opacity: 0.5; }
+
+/* Brand */
+.brandbar { max-width: 1200px; margin: 0 auto; padding: 16px; display: flex; align-items: center; justify-content: space-between; }
+.logo { width: 38px; height: 38px; border: 2px solid var(--ink); display: grid; place-items: center; font-weight: 800; border-radius: 6px; }
+.brand-left { display: flex; align-items: center; gap: 10px; }
+.brand-name { font-weight: 800; letter-spacing: 0.3px; }
+.brand-sub { color: var(--muted); font-size: 12px; }
+.page-title { margin: 0; font-size: 20px; color: var(--ink); }
+
+/* Fascia blu ricerca */
+.searchband { background: var(--blue-600); color: #fff; padding: 18px 0 10px; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.12); }
+.search-wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.search-box { display: grid; grid-template-columns: 220px 1fr 48px; background: #fff; border-radius: 10px; overflow: hidden; }
+.sb-seg { border: none; }
+.sb-select { color: #111; padding: 12px; background: #fff; border-right: 1px solid #e5e7eb; }
+.sb-input { padding: 12px; border: none; outline: none; }
+.sb-icon { background: #fff; border-left: 1px solid #e5e7eb; cursor: pointer; font-size: 18px; }
+.adv-btn { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.7); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.synonyms { max-width: 1200px; margin: 6px auto 0; padding: 0 16px; font-size: 13px; opacity: 0.95; display: flex; align-items: center; gap: 6px; }
+.symb { opacity: 0.85; }
+/* (assistApplied rimosso su richiesta) */
+.counts-bar { background: #fff; border-bottom: 1px solid var(--line); position: relative; }
+.counts-scroller { max-width: 1200px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: nowrap; gap: 12px; justify-content: space-between; overflow: hidden; }
+.count-card { scroll-snap-align: start; background: #325f85; border: 1px solid rgba(255,255,255,0.25); border-radius: 10px; color: #fff; width: 160px; height: 96px; display: grid; justify-items: center; align-content: center; gap: 6px; padding: 8px; text-align: center; }
+.count-card.orange { background: #ef814f; border-color: #ef814f; }
+.count-card.blue { background: #2F6F99; border-color: #2F6F99; }
+.count-card .num { font-weight: 800; font-size: 18px; }
+.count-card .lbl { font-size: 12px; opacity: 0.95; text-align: center; }
+
+.count-card.orange { position: relative; }
+.count-card.orange::after { content: ""; position: absolute; left: 32px; bottom: -10px; border-width: 8px; border-style: solid; border-color: #ef814f transparent transparent transparent; }
+
+.cnav { display: none; }
+
+/* Filtri */
+.filters { max-width: 1200px; margin: 12px auto; padding: 0 16px; }
+.filters-head { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-weight: 700; letter-spacing: 0.3px; }
+.filters-row { display: grid; grid-template-columns: 1fr 280px; gap: 12px; margin-top: 8px; }
+.filters-box { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; gap: 14px; align-items: center; }
+.f-item { color: #1f2a37; }
+.sort-box { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.sort-opt { color: #1f2a37; border: 1px solid var(--line); padding: 6px 10px; border-radius: 8px; cursor: pointer; background: #f7f8fb; }
+.sort-opt.active { background: #e8f0f9; border-color: #d4e3f6; font-weight: 700; }
+
+/* Layout contenuti */
+.layout { max-width: 1200px; margin: 0 auto; padding: 0 16px 100px; }
+.results { padding: 8px 0 24px; }
+
+.result-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.result-item { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+.result-item label { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 14px; cursor: pointer; }
+.result-item input[type="checkbox"] { margin: 2px 0 0; width: 18px; height: 18px; accent-color: var(--orange); }
+.doc-title { font-weight: 700; }
+.doc-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.badge.green { background: #e5f4e9; color: #2f8c4a; border: 1px solid #cce7d3; padding: 1px 6px; border-radius: 999px; font-size: 11px; margin-left: 6px; }
+.doc-excerpt { color: #374457; font-size: 14px; margin-top: 8px; }
+
+.empty-state { display: grid; place-items: center; padding: 24px; }
+.empty-card { text-align: center; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 24px; max-width: 680px; }
+.empty-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+
+/* Chat */
+.chat-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(680px, 100%);
+  transform: translateX(100%);
+  transition: transform 220ms ease;
+  background: #ffffff; border-left: 1px solid var(--line);
+  display: grid; grid-template-rows: auto 1fr auto; z-index: 40;
+}
+.chat-drawer.open { transform: translateX(0); }
+.chat-header { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 12px; background: #f5f7fb; border-bottom: 1px solid var(--line); }
+.chat-title { font-weight: 700; }
+.chat-scope { justify-self: center; }
+.icon-btn { background: #fff; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+
+.chat-body { padding: 16px; overflow: auto; display: grid; gap: 10px; background: #fff; }
+.system-hint { color: var(--muted); font-size: 13px; text-align: center; }
+
+.msg { display: grid; gap: 6px; max-width: 84%; }
+.msg.user { justify-self: end; max-width: 92%; }
+.bubble { padding: 10px 12px; border-radius: 12px; line-height: 1.35; background: #f6f7fb; border: 1px solid var(--line); }
+.msg.user .bubble { background: #e8f0f9; border-color: #d4e3f6; }
+.meta { color: var(--muted); font-size: 12px; }
+.typing { color: var(--muted); font-style: italic; }
+
+.chat-input { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px; border-top: 1px solid var(--line); background: #f5f7fb; }
+.chat-input input { background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+
+.prompt-suggestions { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: #f5f7fb; border-top: 1px solid var(--line); }
+.chip { background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+.chip:hover { background: #eef3f9; }
+
+.hidden { display: none !important; }
+
+/* Assicura che l'attributo [hidden] nasconda sempre gli elementi,
+   anche se hanno display impostato in altri selettori (es. .sh-overlay) */
+[hidden] { display: none !important; }
+
+/* --- Utility action bar fissa (sempre visibile) --- */
+.util-bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--orange); color: #fff; border-top: 1px solid rgba(0,0,0,0.08); z-index: 20; height: var(--bar-h); display: grid; align-items: center; }
+.util-wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 8px; }
+.util-btn { background: transparent; color: #fff; border: none; border-radius: 0; padding: 8px 10px; cursor: pointer; font-weight: 600; }
+.util-btn.primary { background: transparent; color: #fff; border: none; font-weight: 800; }
+.util-btn:hover, .util-btn:focus-visible { text-decoration: underline; }
+.util-spacer { flex: 1; }
+.util-help { position: relative; }
+.util-tooltip { position: absolute; bottom: calc(100% + 12px); right: 0; 
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  color: var(--ink); border: 1px solid var(--line); border-left: 4px solid var(--orange);
+  border-radius: 12px; box-shadow: 0 18px 45px rgba(0,0,0,0.22);
+  padding: 10px 12px; display: flex; align-items: center; gap: 10px; z-index: 25; max-width: 360px;
+  transform: translateY(8px) scale(0.98); opacity: 0; transition: transform 160ms ease, opacity 160ms ease, box-shadow 240ms ease;
+  pointer-events: auto;
+}
+.util-tooltip.show { transform: translateY(0) scale(1); opacity: 1; }
+.util-tooltip::after { content: ""; position: absolute; top: 100%; right: 22px; border-width: 9px; border-style: solid; border-color: #f9fbff transparent transparent transparent; filter: drop-shadow(0 -1px 0 var(--line)); }
+.util-tooltip .tip-content { font-size: 13px; font-weight: 600; letter-spacing: 0.1px; }
+.util-tooltip .tip-content::before { content: "✨"; margin-right: 6px; }
+.util-tooltip .tip-close { background: #fff; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 0 8px; height: 26px; cursor: pointer; }
+
+@keyframes tipPulse {
+  0% { box-shadow: 0 18px 45px rgba(0,0,0,0.22); }
+  50% { box-shadow: 0 18px 55px rgba(239, 129, 79, 0.35); }
+  100% { box-shadow: 0 18px 45px rgba(0,0,0,0.22); }
+}
+.util-tooltip.show { animation: tipPulse 1800ms ease-in-out 1; }
+
+.scope-panel { position: absolute; top: 56px; right: 12px; width: min(560px, 95%); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+.scope-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.scope-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 40vh; overflow: auto; }
+.scope-item { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; background: #f6f7fb; border: 1px solid var(--line); padding: 8px; border-radius: 8px; }
+.scope-remove { background: #fff; border: 1px solid var(--line); color: var(--danger); border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+.scope-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+/* Barra selezioni */
+.selection-bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--orange); color: #fff; border-top: 1px solid rgba(0,0,0,0.08); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; z-index: 30; }
+.bar-btn { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.bar-btn.link { background: transparent; text-decoration: underline; border-color: transparent; }
+.bar-btn.primary { background: #ffffff; color: #111; border-color: #ffffff; font-weight: 700; }
+
+.app-footer { padding: 10px 16px; color: var(--muted); border-top: 1px solid var(--line); background: #fff; }
+
+/* --- Aiuto alla ricerca (modale) --- */
+.sh-overlay { position: fixed; inset: 0; background: transparent; display: grid; align-items: end; justify-items: center; z-index: 60; padding: 16px; padding-bottom: calc(var(--bar-h) + 8px); pointer-events: none; }
+.sh-dialog { width: min(520px, 96%); max-height: 60vh; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); overflow: hidden; display: grid; grid-template-rows: auto 1fr; pointer-events: auto; }
+.sh-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f5f7fb; border-bottom: 1px solid var(--line); }
+.sh-title { font-weight: 800; letter-spacing: 0.2px; }
+.sh-body { padding: 12px; display: grid; gap: 12px; overflow: auto; }
+.sh-textarea { width: 100%; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; min-height: 96px; }
+.sh-actions { display: flex; justify-content: flex-end; }
+.sh-btn-primary { background: #1b6aa6; color: #fff; border: 1px solid #165887; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
+.sh-btn-primary:hover { background: #165887; }
+
+.sh-result { display: grid; gap: 12px; margin-top: 4px; }
+.sh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.sh-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; cursor: pointer; transition: border-color 120ms ease, box-shadow 120ms ease; }
+.sh-card:hover { border-color: #d4e3f6; box-shadow: 0 6px 18px rgba(27,106,166,0.10); }
+.sh-card.selected { border-color: #1b6aa6; box-shadow: 0 0 0 3px rgba(27,106,166,0.15); }
+.sh-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sh-name { font-weight: 800; }
+.sh-pill { background: #eef3f9; color: #1b4e77; border: 1px solid #d4e3f6; border-radius: 999px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
+.sh-motive { color: var(--muted); font-size: 13px; }
+.sh-tip-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sh-tip { display: flex; align-items: center; gap: 8px; background: #f6f7fb; border: 1px solid var(--line); padding: 6px 8px; border-radius: 8px; font-size: 13px; }
+.sh-tip input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+.sh-filters { margin-top: 4px; }
+.sh-filters-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.sh-filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.sh-filter-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
+.sh-filter-chip input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+      .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+      /* --- Avviso demo (modale con overlay) --- */
+      .demo-overlay { position: fixed; inset: 0; background: rgba(7, 22, 40, 0.45); display: grid; place-items: center; z-index: 120; }
+      .demo-modal {
+        width: min(560px, 92%);
+        background: #fff;
+        border: 1px solid #f4d2ad;
+        border-radius: 14px;
+        box-shadow: 0 18px 40px rgba(11, 32, 58, 0.22);
+        overflow: hidden;
+      }
+      .demo-head { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #fff7e6; border-bottom: 1px solid #f4d2ad; }
+      .demo-pill { display: inline-flex; align-items: center; gap: 6px; background: #ffe8c7; color: #7a4a00; border: 1px solid #f4d2ad; border-radius: 999px; padding: 2px 8px; font-weight: 800; font-size: 12px; letter-spacing: 0.2px; }
+      .demo-close { background: #fff; color: #7a7a7a; border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; height: 26px; cursor: pointer; }
+      .demo-body { padding: 14px; display: grid; gap: 10px; }
+      .demo-title { font-size: 16px; font-weight: 800; color: #5b3b00; }
+      .demo-text { line-height: 1.45; color: #5b3b00; }
+      .demo-actions { display: flex; justify-content: flex-end; padding: 0 14px 14px; }
+      .demo-ok { border: 1px solid #f4d2ad; border-radius: 10px; padding: 9px 12px; background: #fff7e6; color: #5b3b00; font-weight: 700; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <!-- Barra superiore viola (mock) -->
+    <div class="topbar">
+      <div class="topbar-content">
+        <span class="top-link">LEFEBVRE GIUFFRÈ</span>
+        <span class="sep">|</span>
+        <span class="top-link">LA NOSTRA OFFERTA</span>
+        <span class="sep">|</span>
+        <span class="top-link">NETWORK</span>
+        <div class="top-right">GFL EDITORE</div>
+      </div>
+    </div>
+
+    <!-- Header brand -->
+    <header class="brandbar">
+      <div class="brand-left">
+      </div>
+      <div class="brand-right">
+        <h1 class="page-title">Risultati della ricerca</h1>
+      </div>
+    </header>
+
+    <!-- Avviso demo: modale con overlay (visibile a ogni refresh, chiudibile) -->
+    <div id="demoOverlay" class="demo-overlay" role="dialog" aria-modal="true" aria-labelledby="demoTitle">
+      <div class="demo-modal" role="document">
+        <div class="demo-head">
+          <span class="demo-pill">DEMO</span>
+          <button id="demoCloseBtn" class="demo-close" title="Chiudi">×</button>
+        </div>
+        <div class="demo-body">
+          <div id="demoTitle" class="demo-title">Questa è una demo con dati fissi</div>
+          <div class="demo-text">
+            L’interfaccia mostra un flusso di presentazione con contenuti statici per simulare l’esperienza.
+            Seleziona uno o più documenti nei risultati e poi clicca su "Apri Chat AI" per avviare la conversazione.
+          </div>
+        </div>
+        <div class="demo-actions">
+          <button id="demoOkBtn" class="demo-ok" type="button">Ho capito</button>
+        </div>
+      </div>
+    </div>
+
+      <section class="searchband">
+        <div class="search-wrap">
+          <div class="search-box">
+            <div class="sb-seg sb-select">Giurisprudenza <span class="chev">▾</span></div>
+            <input id="search" class="sb-seg sb-input" type="search" placeholder="appello" />
+            <button class="sb-seg sb-icon" title="Cerca">🔍</button>
+          </div>
+          <button class="adv-btn" title="Ricerca avanzata">≡ Ricerca avanzata</button>
+        </div>
+        <div class="synonyms"><span class="symb">ⓘ</span> Sinonimi suggeriti</div>
+      </section>
+
+    <!-- Counts carousel sotto la fascia blu -->
+    <section class="counts-bar">
+      <button class="cnav left" id="countsPrev" aria-label="Precedente" disabled>‹</button>
+      <div class="counts-scroller" id="countsScroller">
+        <div class="count-card orange">
+          <div class="num">94.934</div>
+          <div class="lbl">Massime</div>
+        </div>
+        <div class="count-card blue"><div class="num">6.318</div><div class="lbl">Giurisprudenza commentata</div></div>
+        <div class="count-card blue"><div class="num">566.597</div><div class="lbl">Cassazione Civile</div></div>
+        <div class="count-card blue"><div class="num">409.872</div><div class="lbl">Cassazione Penale</div></div>
+        <div class="count-card blue"><div class="num">125.476</div><div class="lbl">Sentenze di Merito</div></div>
+        <div class="count-card blue"><div class="num">584.879</div><div class="lbl">Orientamento Locale</div></div>
+        <div class="count-card blue"><div class="num">328.140</div><div class="lbl">Amministrative</div></div>
+      </div>
+      <button class="cnav right" id="countsNext" aria-label="Successivo" disabled>›</button>
+    </section>
+
+    <!-- Filtri -->
+    <section class="filters">
+      <div class="filters-head">
+        <div class="filters-title">⌄ FILTRA</div>
+        <div class="sort-title">⇅ ORDINA PER</div>
+      </div>
+      <div class="filters-row">
+        <div class="filters-box">
+          <span class="f-item">Argomento: ▾</span>
+          <span class="f-item">Autorità: ▾</span>
+          <span class="f-item">Luogo: ▾</span>
+          <span class="f-item">Data: ▾</span>
+        </div>
+        <div class="sort-box">
+          <span class="sort-opt active">📅 Data</span>
+          <span class="sort-opt">▣ Rilevanza</span>
+        </div>
+      </div>
+    </section>
+
+    <main class="layout">
+      <section class="results" aria-label="Risultati di ricerca">
+        <ul class="result-list" id="resultList">
+          <!-- Oggetti di esempio; in produzione arriverebbero dal backend -->
+          <li class="result-item">
+            <label>
+              <input type="checkbox" class="doc-checkbox" data-id="doc1" data-title="Cons. Stato, Sez. III, n. 1234/2022" />
+              <div class="doc">
+                <div class="doc-title">Cons. Stato, Sez. III, n. 1234/2022</div>
+                <div class="doc-meta">12/05/2022 · Appalti · Principio di rotazione <span class="badge green">NUOVO</span></div>
+                <div class="doc-excerpt">Sulla corretta applicazione del principio di rotazione negli affidamenti sottosoglia...</div>
+              </div>
+            </label>
+          </li>
+          <li class="result-item">
+            <label>
+              <input type="checkbox" class="doc-checkbox" data-id="doc2" data-title="TAR Lazio, Roma, Sez. II, n. 5678/2023" />
+              <div class="doc">
+                <div class="doc-title">TAR Lazio, Roma, Sez. II, n. 5678/2023</div>
+                <div class="doc-meta">03/11/2023 · Accesso agli atti · Interesse diretto</div>
+                <div class="doc-excerpt">L’istanza di accesso agli atti deve essere sorretta da un interesse concreto e attuale...</div>
+              </div>
+            </label>
+          </li>
+          <li class="result-item">
+            <label>
+              <input type="checkbox" class="doc-checkbox" data-id="doc3" data-title="Cass. Civ., Sez. Lav., n. 9012/2021" />
+              <div class="doc">
+                <div class="doc-title">Cass. Civ., Sez. Lav., n. 9012/2021</div>
+                <div class="doc-meta">21/02/2021 · Lavoro · Licenziamento</div>
+                <div class="doc-excerpt">Sulla proporzionalità del licenziamento disciplinare in relazione a condotte reiterate...</div>
+              </div>
+            </label>
+          </li>
+          <li class="result-item">
+            <label>
+              <input type="checkbox" class="doc-checkbox" data-id="doc4" data-title="Corte Cost., n. 77/2020" />
+              <div class="doc">
+                <div class="doc-title">Corte Cost., n. 77/2020</div>
+                <div class="doc-meta">07/04/2020 · Costituzionale · Eguaglianza</div>
+                <div class="doc-excerpt">Dichiarazione di illegittimità costituzionale parziale della disciplina regionale...</div>
+              </div>
+            </label>
+          </li>
+          <li class="result-item">
+            <label>
+              <input type="checkbox" class="doc-checkbox" data-id="doc5" data-title="Cons. Stato, Ad. Plen., n. 10/2021" />
+              <div class="doc">
+                <div class="doc-title">Cons. Stato, Ad. Plen., n. 10/2021</div>
+                <div class="doc-meta">09/12/2021 · Appalti · Avvalimento</div>
+                <div class="doc-excerpt">Chiarimenti sui limiti dell’avvalimento e la prova della disponibilità dei requisiti...</div>
+              </div>
+            </label>
+          </li>
+          <li class="result-item">
+            <label>
+              <input type="checkbox" class="doc-checkbox" data-id="doc6" data-title="TAR Lombardia, Milano, Sez. I, n. 222/2024" />
+              <div class="doc">
+                <div class="doc-title">TAR Lombardia, Milano, Sez. I, n. 222/2024</div>
+                <div class="doc-meta">14/01/2024 · Urbanistica · Conferenza servizi</div>
+                <div class="doc-excerpt">Sulla natura endoprocedimentale dei pareri resi in conferenza di servizi...</div>
+              </div>
+            </label>
+          </li>
+        </ul>
+      </section>
+      <section class="empty-state" id="emptyState">
+        <div class="empty-card">
+          <div class="empty-title">Seleziona N documenti</div>
+          <p>Spunta uno o più risultati e usa la barra arancione in basso per aprire la Chat AI sul perimetro selezionato.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Drawer Chat AI -->
+    <aside class="chat-drawer" id="chatDrawer" aria-hidden="true">
+      <div class="chat-header">
+        <div class="chat-title">Chat AI</div>
+        <div class="chat-scope">
+          <button id="scopeBtn" class="pill" title="Modifica perimetro dei documenti">Modifica perimetro <span id="scopeCount" class="hidden">0</span></button>
+        </div>
+        <button id="closeChatBtn" class="icon-btn" title="Chiudi">×</button>
+      </div>
+      <div class="chat-body" id="chatBody">
+        <div class="system-hint">Nuova conversazione. Il modello risponderà in base ai documenti selezionati.</div>
+      </div>
+      <!-- Prompt rapidi -->
+      <div class="prompt-suggestions" id="promptSuggestions">
+        <button class="chip" data-text="Sintetizza">Sintetizza</button>
+        <button class="chip" data-text="Analizza">Analizza</button>
+        <button class="chip" data-text="Confronta">Confronta</button>
+      </div>
+      <form class="chat-input" id="chatForm">
+        <input id="chatMessage" type="text" placeholder="Scrivi un messaggio..." autocomplete="off" />
+        <button class="btn primary" type="submit">Invia</button>
+      </form>
+
+      <!-- Pannello perimetro -->
+      <div class="scope-panel" id="scopePanel" hidden>
+        <div class="scope-header">
+          <div>Documenti nel perimetro</div>
+          <button id="scopeCloseBtn" class="icon-btn" title="Chiudi">×</button>
+        </div>
+        <ul id="scopeList" class="scope-list"></ul>
+        <div class="scope-actions">
+          <button id="scopeApplyBtn" class="btn">Applica modifiche</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Barra selezioni stile DeJure (mock) -->
+    <div id="selectionBar" class="selection-bar" hidden>
+      <div class="sel-left">
+        <strong id="selCount">0</strong> documenti selezionati
+      </div>
+      <div class="sel-actions">
+        <button id="selectAllBtn" class="bar-btn">Seleziona tutti</button>
+        <button id="clearAllBtn" class="bar-btn link">Cancella selezioni</button>
+        <button id="openChatBtn" class="bar-btn primary">Apri Chat AI</button>
+      </div>
+    </div>
+
+    <!-- Barra azioni fissa (sempre visibile) -->
+    <div id="utilityBar" class="util-bar" role="region" aria-label="Azioni rapide">
+      <div class="util-wrap">
+        <button class="util-btn" title="Stampa">🖨️ Stampa</button>
+        <button class="util-btn" title="Scarica">⬇️ Scarica</button>
+        <button class="util-btn" title="Monitora">👁️ Monitora</button>
+        <button class="util-btn" title="Invia">✉️ Invia</button>
+        <div class="util-spacer"></div>
+        <div class="util-help">
+          <button id="utilHelpBtn" class="util-btn primary" title="Aiuto alla ricerca">✨ Aiuto alla ricerca</button>
+          <div id="utilHelpTip" class="util-tooltip" hidden>
+            <div class="tip-content">Nuovo: assistente alla ricerca disponibile</div>
+            <button class="tip-close" aria-label="Chiudi">×</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <small>Prototipo statico. Nessun backend. Le risposte sono simulate.</small>
+    </footer>
+
+    <!-- Modale: Aiuto alla ricerca -->
+    <div id="searchHelpModal" class="sh-overlay" hidden aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="sh-dialog" role="document">
+        <div class="sh-header">
+          <div class="sh-title">Aiuto alla ricerca</div>
+          <button id="shCloseBtn" class="icon-btn" title="Chiudi">×</button>
+        </div>
+        <div class="sh-body">
+          <label class="visually-hidden" for="shTextarea">Descrizione della ricerca</label>
+          <textarea id="shTextarea" class="sh-textarea" rows="6" placeholder="Descrivi quello che stai cercando oppure spiega il tuo caso..."></textarea>
+          <div class="sh-actions">
+            <button id="shSuggestBtn" class="sh-btn-primary">Suggerisci ricerca</button>
+          </div>
+          <div id="shResult" class="sh-result" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+// Prototipo front-end senza backend.
+// Gestisce: selezione documenti, apertura chat, perimetro, simulazione risposta.
+
+(function () {
+  const resultList = document.getElementById('resultList');
+  const selectionBar = document.getElementById('selectionBar');
+  const selCount = document.getElementById('selCount');
+  const openChatBtn = document.getElementById('openChatBtn');
+  const selectAllBtn = document.getElementById('selectAllBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const emptyState = document.getElementById('emptyState');
+
+  const chatDrawer = document.getElementById('chatDrawer');
+  const closeChatBtn = document.getElementById('closeChatBtn');
+  const chatBody = document.getElementById('chatBody');
+  const chatForm = document.getElementById('chatForm');
+  const chatMessage = document.getElementById('chatMessage');
+  const promptSuggestions = document.getElementById('promptSuggestions');
+  const scopeBtn = document.getElementById('scopeBtn');
+  const scopeCount = document.getElementById('scopeCount');
+  const scopePanel = document.getElementById('scopePanel');
+  const scopeCloseBtn = document.getElementById('scopeCloseBtn');
+  const scopeList = document.getElementById('scopeList');
+  const scopeApplyBtn = document.getElementById('scopeApplyBtn');
+
+  // Aiuto alla ricerca (modale)
+  const searchHelpBtn = document.getElementById('searchHelpBtn');
+  const shModal = document.getElementById('searchHelpModal');
+  const shCloseBtn = document.getElementById('shCloseBtn');
+  const shTextarea = document.getElementById('shTextarea');
+  const shSuggestBtn = document.getElementById('shSuggestBtn');
+  const shResult = document.getElementById('shResult');
+  let shLastData = null; // ultimo JSON suggerimenti
+  let shMode = 'suggest'; // 'suggest' | 'apply'
+
+  // Utility bar & tooltip
+  const utilHelpBtn = document.getElementById('utilHelpBtn');
+  const utilHelpTip = document.getElementById('utilHelpTip');
+
+  // Carousel counts
+  const countsScroller = document.getElementById('countsScroller');
+  const countsPrev = document.getElementById('countsPrev');
+  const countsNext = document.getElementById('countsNext');
+
+  // Stato selezione corrente
+  const selected = new Map(); // id -> { id, title }
+
+  function updateSelectionUI() {
+    const n = selected.size;
+    selCount.textContent = String(n);
+    openChatBtn.disabled = n === 0;
+    scopeCount.textContent = String(n);
+    selectionBar.hidden = n === 0;
+  }
+
+  function getAllCheckboxes() {
+    return Array.from(resultList.querySelectorAll('.doc-checkbox'));
+  }
+
+  function applySelectionFromMap() {
+    const ids = new Set(Array.from(selected.keys()));
+    getAllCheckboxes().forEach(cb => {
+      cb.checked = ids.has(cb.dataset.id);
+    });
+    updateSelectionUI();
+  }
+
+  function onCheckboxChange(e) {
+    const cb = e.target;
+    const id = cb.dataset.id;
+    const title = cb.dataset.title;
+    if (cb.checked) {
+      selected.set(id, { id, title });
+    } else {
+      selected.delete(id);
+    }
+    updateSelectionUI();
+  }
+
+  // Event wiring per le checkbox
+  getAllCheckboxes().forEach(cb => cb.addEventListener('change', onCheckboxChange));
+
+  // Selezione rapida
+  selectAllBtn.addEventListener('click', () => {
+    getAllCheckboxes().forEach(cb => {
+      cb.checked = true;
+      selected.set(cb.dataset.id, { id: cb.dataset.id, title: cb.dataset.title });
+    });
+    updateSelectionUI();
+  });
+
+  clearAllBtn.addEventListener('click', () => {
+    selected.clear();
+    getAllCheckboxes().forEach(cb => (cb.checked = false));
+    updateSelectionUI();
+  });
+
+  // Apertura/chiusura chat
+  openChatBtn.addEventListener('click', () => {
+    chatDrawer.classList.add('open');
+    chatDrawer.setAttribute('aria-hidden', 'false');
+    emptyState.style.display = 'none';
+    renderScopePanelList();
+  });
+
+  closeChatBtn.addEventListener('click', () => {
+    chatDrawer.classList.remove('open');
+    chatDrawer.setAttribute('aria-hidden', 'true');
+  });
+
+  // Pannello perimetro
+  scopeBtn.addEventListener('click', () => {
+    scopePanel.hidden = !scopePanel.hidden;
+    if (!scopePanel.hidden) renderScopePanelList();
+  });
+  scopeCloseBtn.addEventListener('click', () => { scopePanel.hidden = true; });
+  scopeApplyBtn.addEventListener('click', () => {
+    // Sincronizza selezione UI -> stato già fatto durante rimozioni
+    scopePanel.hidden = true;
+    applySelectionFromMap();
+    // Messaggio di sistema che segnala aggiornamento del perimetro
+    pushSystem(`Perimetro aggiornato: ${selected.size} documenti.`);
+  });
+
+  function renderScopePanelList() {
+    scopeList.innerHTML = '';
+    if (selected.size === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'Nessun documento selezionato.';
+      li.style.color = '#9fb0c3';
+      scopeList.appendChild(li);
+      return;
+    }
+    for (const { id, title } of selected.values()) {
+      const li = document.createElement('li');
+      li.className = 'scope-item';
+      const span = document.createElement('span');
+      span.textContent = title;
+      const btn = document.createElement('button');
+      btn.className = 'scope-remove';
+      btn.textContent = 'Rimuovi';
+      btn.addEventListener('click', () => {
+        selected.delete(id);
+        renderScopePanelList();
+        updateSelectionUI();
+      });
+      li.appendChild(span);
+      li.appendChild(btn);
+      scopeList.appendChild(li);
+    }
+  }
+
+  // Chat helpers
+  function pushMessage(role, text) {
+    const wrap = document.createElement('div');
+    wrap.className = `msg ${role}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    wrap.appendChild(bubble);
+    chatBody.appendChild(wrap);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function pushSystem(text) {
+    const div = document.createElement('div');
+    div.className = 'system-hint';
+    div.textContent = text;
+    chatBody.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function pushTyping() {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg assistant';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble typing';
+    bubble.textContent = 'Sta scrivendo…';
+    wrap.appendChild(bubble);
+    chatBody.appendChild(wrap);
+    chatBody.scrollTop = chatBody.scrollHeight;
+    return () => wrap.remove();
+  }
+
+  function simulateAnswer(userText) {
+    const docs = Array.from(selected.values());
+    const titles = docs.map(d => `“${d.title}”`);
+    const cite = titles.slice(0, 3).join('; ') + (titles.length > 3 ? '…' : '');
+
+    const parts = [
+      `Ho analizzato la tua richiesta in base al perimetro corrente (${docs.length} documenti).`,
+      `Questo è un prototipo: la risposta è simulata. Nell'implementazione reale, l'AI estrarrebbe e citerebbe i passaggi rilevanti.`,
+      `Documenti considerati: ${cite}`,
+    ];
+
+    // Finta latenza + sostituzione dell'indicatore di typing
+    const removeTyping = pushTyping();
+    setTimeout(() => {
+      removeTyping();
+      pushMessage('assistant', parts.join('\n\n'));
+    }, Math.min(1600 + Math.random() * 1000, 2400));
+  }
+
+  chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = chatMessage.value.trim();
+    if (!text) return;
+    pushMessage('user', text);
+    chatMessage.value = '';
+    simulateAnswer(text);
+  });
+
+  // Prompt rapidi
+  promptSuggestions.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    const text = btn.dataset.text || btn.textContent.trim();
+    pushMessage('user', text);
+    simulateAnswer(text);
+  });
+
+  // Ricerca mock (client-side) - solo su click del bottone lente
+  const search = document.getElementById('search');
+  const searchBtn = document.querySelector('.sb-icon');
+  function shuffleResultList() {
+    const ul = resultList;
+    if (!ul) return;
+    const items = Array.from(ul.children);
+    // Mostra sempre tutti
+    items.forEach(li => (li.style.display = ''));
+    // Shuffle semplice
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const a = items[i], b = items[j];
+      if (a && b && a !== b) {
+        ul.insertBefore(a, b);
+      }
+    }
+    // Assicura che l'empty state sia nascosto
+    if (emptyState) emptyState.style.display = 'none';
+  }
+
+  function performSearchFilter(query) {
+    // Demo: mantieni sempre risultati visibili e rimescola
+    shuffleResultList();
+  }
+  function runSearch() {
+    const q = search ? search.value : '';
+    performSearchFilter(q);
+    if (q && q.trim().length > 0) showUtilTip();
+  }
+  if (searchBtn) searchBtn.addEventListener('click', runSearch);
+  if (search) {
+    search.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runSearch();
+      }
+    });
+  }
+
+  // Inizializzazione
+  updateSelectionUI();
+
+  // Avviso demo (modale): chiusura (non persistente, riappare a ogni refresh)
+  const demoOverlay = document.getElementById('demoOverlay');
+  const demoCloseBtn = document.getElementById('demoCloseBtn');
+  const demoOkBtn = document.getElementById('demoOkBtn');
+  function hideDemo() { if (demoOverlay) demoOverlay.hidden = true; }
+  if (demoCloseBtn) demoCloseBtn.addEventListener('click', hideDemo);
+  if (demoOkBtn) demoOkBtn.addEventListener('click', hideDemo);
+  if (demoOverlay) {
+    demoOverlay.addEventListener('click', (e) => { if (e.target === demoOverlay) hideDemo(); });
+  }
+
+  // Counts carousel handlers
+  function updateCountsNav() {
+    if (!countsScroller) return;
+    const maxScroll = countsScroller.scrollWidth - countsScroller.clientWidth;
+    const x = countsScroller.scrollLeft;
+    if (countsPrev) countsPrev.disabled = x <= 2;
+    if (countsNext) countsNext.disabled = x >= maxScroll - 2;
+  }
+  if (countsScroller) {
+    countsScroller.addEventListener('scroll', () => {
+      // Throttle semplice via requestAnimationFrame
+      if (updateCountsNav.raf) cancelAnimationFrame(updateCountsNav.raf);
+      updateCountsNav.raf = requestAnimationFrame(updateCountsNav);
+    });
+    updateCountsNav();
+  }
+  function scrollCounts(dir) {
+    if (!countsScroller) return;
+    const step = 240; // ~larghezza card
+    countsScroller.scrollBy({ left: dir * step, behavior: 'smooth' });
+    setTimeout(updateCountsNav, 300);
+  }
+  if (countsPrev) countsPrev.addEventListener('click', () => scrollCounts(-1));
+  if (countsNext) countsNext.addEventListener('click', () => scrollCounts(1));
+
+  // --- Aiuto alla ricerca: UI ---
+  function openSearchHelp() {
+    if (!shModal) return;
+    shModal.hidden = false;
+    shModal.setAttribute('aria-hidden', 'false');
+    // focus sul campo di testo dopo apertura
+    setTimeout(() => shTextarea && shTextarea.focus(), 0);
+    // reset stato bottone e risultati
+    shMode = 'suggest';
+    shLastData = null;
+    if (shSuggestBtn) shSuggestBtn.textContent = 'Suggerisci ricerca';
+    if (shResult) shResult.innerHTML = '';
+  }
+
+  function closeSearchHelp() {
+    if (!shModal) return;
+    shModal.hidden = true;
+    shModal.setAttribute('aria-hidden', 'true');
+  }
+
+  if (searchHelpBtn) searchHelpBtn.addEventListener('click', openSearchHelp);
+  if (utilHelpBtn) utilHelpBtn.addEventListener('click', openSearchHelp);
+  if (shCloseBtn) shCloseBtn.addEventListener('click', closeSearchHelp);
+  if (shModal) {
+    // Chiudi cliccando sull'overlay fuori dalla dialog
+    shModal.addEventListener('click', (e) => {
+      if (e.target === shModal) closeSearchHelp();
+    });
+  }
+
+  // Tooltip che appare alla prima ricerca non vuota
+  let tipShown = false;
+  function showUtilTip() {
+    if (!utilHelpTip || tipShown) return;
+    utilHelpTip.hidden = false;
+    requestAnimationFrame(() => utilHelpTip.classList.add('show'));
+    tipShown = true;
+  }
+  function hideUtilTip() {
+    if (!utilHelpTip) return;
+    utilHelpTip.classList.remove('show');
+    utilHelpTip.hidden = true;
+  }
+  if (utilHelpTip) {
+    const close = utilHelpTip.querySelector('.tip-close');
+    if (close) close.addEventListener('click', hideUtilTip);
+    utilHelpTip.addEventListener('click', (e) => {
+      // clic sul tooltip apre anche la modale
+      if (e.target.closest('.tip-content')) {
+        hideUtilTip();
+        openSearchHelp();
+      }
+    });
+  }
+
+  function renderSearchHelpResult(data) {
+    if (!shResult) return;
+    shResult.innerHTML = '';
+
+    if (!data || !Array.isArray(data.archivi) || data.archivi.length === 0) {
+      const div = document.createElement('div');
+      div.className = 'system-hint';
+      div.textContent = 'Nessun suggerimento disponibile.';
+      shResult.appendChild(div);
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'sh-grid';
+    data.archivi.forEach((a, idx) => {
+      const card = document.createElement('div');
+      card.className = 'sh-card';
+      card.dataset.archive = a.nome || `archivio_${idx}`;
+
+      const head = document.createElement('div');
+      head.className = 'sh-card-head';
+      const name = document.createElement('div');
+      name.className = 'sh-name';
+      name.textContent = a.nome || 'Archivio';
+      head.appendChild(name);
+
+      const motive = document.createElement('div');
+      motive.className = 'sh-motive';
+      motive.textContent = a.motivazione || '';
+
+      const ul = document.createElement('ul');
+      ul.className = 'sh-tip-list';
+      (a.tipologie || []).forEach((t, i2) => {
+        const li = document.createElement('li');
+        li.className = 'sh-tip';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'sh-tip-cb';
+        cb.id = `tip-${idx}-${i2}`;
+        cb.value = t;
+        const lab = document.createElement('label');
+        lab.setAttribute('for', cb.id);
+        lab.textContent = t;
+        li.appendChild(cb);
+        li.appendChild(lab);
+        ul.appendChild(li);
+      });
+
+      // Clic sulla card seleziona l'archivio (esclusi click su input/label interni)
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('input') || e.target.tagName === 'LABEL') return;
+        grid.querySelectorAll('.sh-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+      });
+
+      card.appendChild(head);
+      if (a.motivazione) card.appendChild(motive);
+      if (a.tipologie && a.tipologie.length) card.appendChild(ul);
+      grid.appendChild(card);
+    });
+
+    shResult.appendChild(grid);
+
+    if (Array.isArray(data.filtri) && data.filtri.length) {
+      const ft = document.createElement('div');
+      ft.className = 'sh-filters';
+      const title = document.createElement('div');
+      title.className = 'sh-filters-title';
+      title.textContent = 'Filtri consigliati (data)';
+      const chips = document.createElement('div');
+      chips.className = 'sh-filter-chips';
+      data.filtri.forEach((f, i3) => {
+        const lab = document.createElement('label');
+        lab.className = 'sh-filter-chip';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'sh-filter-cb';
+        cb.id = `filt-${i3}`;
+        cb.value = f;
+        const span = document.createElement('span');
+        span.textContent = f;
+        lab.appendChild(cb);
+        lab.appendChild(span);
+        chips.appendChild(lab);
+      });
+      ft.appendChild(title);
+      ft.appendChild(chips);
+      shResult.appendChild(ft);
+    }
+
+    // Solo se ci sono archivi, abilita modalità "apply"
+    if (Array.isArray(data.archivi) && data.archivi.length) {
+      shLastData = data;
+      shMode = 'apply';
+      if (shSuggestBtn) shSuggestBtn.textContent = 'Applica suggerimenti';
+    }
+  }
+
+  if (shSuggestBtn) {
+    shSuggestBtn.addEventListener('click', async () => {
+      if (!shResult) return;
+      const text = (shTextarea && shTextarea.value || '').trim();
+      if (shMode === 'apply' && shLastData) {
+        // Prima chiudi la modale, poi applica i suggerimenti e mostra i risultati
+        closeSearchHelp();
+        setTimeout(() => {
+          const selectedData = collectSearchHelpSelection(shLastData);
+          applySuggestions(selectedData, text);
+        }, 40);
+        return;
+      }
+      shResult.innerHTML = '<div class="typing">Analizzo la richiesta…</div>';
+      try {
+        const out = await window.suggestSearch(text);
+        renderSearchHelpResult(out);
+      } catch (e) {
+        const err = document.createElement('div');
+        err.className = 'system-hint';
+        err.textContent = 'Si è verificato un problema nel recupero dei suggerimenti.';
+        shResult.innerHTML = '';
+        shResult.appendChild(err);
+      }
+    });
+  }
+
+  // Raccoglie selezione utente dalla modale e crea un payload compatibile con applySuggestions
+  function collectSearchHelpSelection(fallbackData) {
+    const selectedCard = shResult.querySelector('.sh-card.selected');
+    let nome = null;
+    let tips = [];
+    if (selectedCard) {
+      nome = selectedCard.dataset.archive || selectedCard.querySelector('.sh-name')?.textContent?.trim() || null;
+      tips = Array.from(selectedCard.querySelectorAll('.sh-tip-cb:checked')).map(cb => cb.value);
+    }
+    // Se nessuna card è selezionata, ma l'utente ha spuntato tipologie, deduci l'archivio dalla card che contiene i checkbox selezionati
+    if (!nome) {
+      const anyChecked = shResult.querySelector('.sh-tip-cb:checked');
+      if (anyChecked) {
+        const ownerCard = anyChecked.closest('.sh-card');
+        if (ownerCard) {
+          nome = ownerCard.dataset.archive || ownerCard.querySelector('.sh-name')?.textContent?.trim() || null;
+          tips = Array.from(ownerCard.querySelectorAll('.sh-tip-cb:checked')).map(cb => cb.value);
+        }
+      }
+    }
+    const filt = Array.from(shResult.querySelectorAll('.sh-filter-cb:checked')).map(cb => cb.value);
+    if (!nome && Array.isArray(fallbackData.archivi) && fallbackData.archivi.length) {
+      nome = fallbackData.archivi[0].nome || 'Archivio';
+      tips = (fallbackData.archivi[0].tipologie || []).slice(0, 2);
+    }
+    return { archivi: [{ nome, tipologie: tips }], filtri: filt };
+  }
+
+  // Applica: archivio; sottocategoria; filtri; testo ricerca
+  function applySuggestions(data, userText) {
+    // 1) Archivio: prendi l'archivio a priorità minima
+    const chosen = [...(data.archivi || [])]
+      .slice()
+      .sort((a, b) => (a.priorita ?? 999) - (b.priorita ?? 999))[0];
+    let archiveName = chosen && chosen.nome ? String(chosen.nome) : null;
+    // Normalizza a solo due etichette per la demo: Giurisprudenza o Normativa
+    const nameLower = (archiveName || '').toLowerCase();
+    const displayArchive = nameLower.includes('normativa') ? 'Normativa' : 'Giurisprudenza';
+
+    // 2) Sottocategorie: lista tipologie del primo archivio scelto
+    const subcats = (chosen && Array.isArray(chosen.tipologie)) ? chosen.tipologie : [];
+
+    // 3) Filtri consigliati
+    const filters = Array.isArray(data.filtri) ? data.filtri : [];
+
+    // 4) Testo di ricerca: usa userText se fornito, altrimenti costruisci dalle tipologie
+    const q = (userText && userText.trim()) || subcats.join(' ');
+
+    // Aggiorna UI: select archivio (testo nella sb-select)
+    const sbSelect = document.querySelector('.sb-select');
+    if (sbSelect) {
+      const chev = '<span class="chev">▾</span>';
+      sbSelect.innerHTML = `${displayArchive} ${chev}`;
+    }
+
+    // Aggiorna campo ricerca
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+      searchInput.value = q || searchInput.value;
+      // Demo: mantieni sempre risultati visibili e rimescola (azione esplicita)
+      if (typeof performSearchFilter === 'function') performSearchFilter(searchInput.value);
+      // Focus al campo ricerca per feedback utente
+      searchInput.focus();
+    }
+
+    // Nessun riepilogo visuale sotto i sinonimi (assistApplied rimosso su richiesta)
+
+    // Messaggio di sistema nella pagina per feedback
+    pushSystem('Suggerimenti applicati alla ricerca.');
+
+    // Porta l'area risultati in vista dopo l'applicazione
+    const resultsEl = document.getElementById('resultList');
+    if (resultsEl) {
+      setTimeout(() => {
+        resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 30);
+    }
+  }
+
+  // --- Aiuto alla ricerca: funzione mock esposta globalmente ---
+  // Simula una chiamata AI; restituisce il JSON di esempio dopo una breve latenza.
+  window.suggestSearch = function suggestSearch(userText) {
+    // userText non è utilizzato nel mock; in futuro piloterà il modello
+    const example = {
+      archivi: [
+        {
+          nome: 'Giurisprudenza',
+          motivazione: 'La richiesta riguarda orientamenti giurisprudenziali.',
+          priorita: 1,
+          tipologie: ['Sentenze Cassazione Civile', 'Sentenze di Merito']
+        },
+        {
+          nome: 'Normativa',
+          motivazione: 'Sono presenti riferimenti normativi.',
+          priorita: 2,
+          tipologie: ['Leggi nazionali']
+        }
+      ],
+      filtri: ['Data ultimi 5 anni']
+    };
+    return new Promise(resolve => {
+      const delay = 800 + Math.floor(Math.random() * 600);
+      setTimeout(() => resolve(example), delay);
+    });
+  };
+})();
+    </script>
+  </body>
+  </html>
