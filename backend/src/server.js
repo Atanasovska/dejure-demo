@@ -434,7 +434,10 @@ app.post('/api/sessions/:sessionId/chat', async (req, res) => {
   const initSse = () => {
     if (res.headersSent) return;
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
   };
 
   try {
@@ -487,8 +490,13 @@ app.post('/api/sessions/:sessionId/chat', async (req, res) => {
 
     initSse();
     send({ selectedDocuments: scopeDocs.map((doc) => doc.id) });
-    for (let offset = 0; offset < full.length; offset += 160) {
-      send({ delta: full.slice(offset, offset + 160) });
+    const chunks = full.match(/(?:\S+\s*){1,4}/gu) || [full];
+    for (const delta of chunks) {
+      if (res.destroyed) break;
+      send({ delta });
+      // La demo genera il testo localmente: una breve pausa rende visibile lo
+      // stream come avverrebbe naturalmente con i token prodotti da un LLM.
+      await new Promise((resolve) => setTimeout(resolve, 40));
     }
     // Salva risposta completa
     s.messages.push({ role: 'assistant', content: full, selectedDocuments: scopeDocs.map((doc) => doc.id) });

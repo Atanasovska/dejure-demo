@@ -423,6 +423,12 @@ export default function App() {
     })
   }
 
+  useEffect(() => {
+    if (!streaming) return
+    const el = chatBodyRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [streamAssistant, streaming])
+
   async function sendChat(text) {
     const question = String(text || '').trim()
     if (!question || streaming) return
